@@ -78,7 +78,8 @@ def save_to_csv(rows, filename: str):
     if not rows:
         return
     headers = rows[0].keys()
-    with open(filename, "w", newline="", encoding="utf-8") as f:
+    # Use UTF-8 with BOM so spreadsheet apps correctly display Arabic text
+    with open(filename, "w", newline="", encoding="utf-8-sig") as f:
         writer = csv.DictWriter(f, fieldnames=headers)
         writer.writeheader()
         writer.writerows(rows)

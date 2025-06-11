@@ -18,7 +18,8 @@ pip install -r requirements.txt
 ## Usage
 
 Run the scraper using Python. The output will be stored in
-`martyrs_data.csv`.
+`martyrs_data.csv` encoded in UTF-8 with a BOM so that spreadsheet
+applications display the Arabic text correctly.
 
 ```bash
 python scrape_martyrs.py
