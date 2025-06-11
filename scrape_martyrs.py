@@ -1,15 +1,25 @@
 import csv
-import string
+import time
 import requests
 from bs4 import BeautifulSoup
 
 BASE_URL = "https://leaks.zamanalwsl.net/martyrs.php"
+USER_AGENT = "Mozilla/5.0 (compatible; ST-PHPScrape/1.0)"
+
+# Arabic alphabet used for first name searches
+ARABIC_LETTERS = [
+    "ا", "ب", "ت", "ث", "ج", "ح", "خ", "د",
+    "ذ", "ر", "ز", "س", "ش", "ص", "ض", "ط",
+    "ظ", "ع", "غ", "ف", "ق", "ك", "ل", "م",
+    "ن", "ه", "و", "ي",
+]
 
 
-def fetch(keyword: str) -> str:
-    """Retrieve HTML for a search keyword."""
-    params = {"search": keyword}
-    response = requests.get(BASE_URL, params=params)
+def fetch(letter: str, page: int = 1) -> str:
+    """Retrieve HTML for a search letter and page number."""
+    params = {"firstname": letter, "state": "", "page": page}
+    headers = {"User-Agent": USER_AGENT}
+    response = requests.get(BASE_URL, params=params, headers=headers)
     response.raise_for_status()
     return response.text
 
@@ -32,14 +42,34 @@ def parse_html(html: str):
     return rows
 
 
-def scrape_all():
-    """Iterate over multiple search queries and collect all results."""
+def scrape_letter(letter: str):
+    """Collect all results for a single letter across pages."""
     results = []
-    search_terms = list(string.ascii_lowercase) + list(string.digits)
-    for term in search_terms:
-        html = fetch(term)
+    page = 1
+    while True:
+        html = fetch(letter, page)
         rows = parse_html(html)
+        if not rows:
+            break
         results.extend(rows)
+
+        soup = BeautifulSoup(html, "html.parser")
+        next_page = page + 1
+        if soup.find("a", href=lambda h: h and f"page={next_page}" in h):
+            page += 1
+            time.sleep(0.5)
+        else:
+            break
+    return results
+
+
+def scrape_all():
+    """Iterate over Arabic letters and collect all results."""
+    results = []
+    for letter in ARABIC_LETTERS:
+        rows = scrape_letter(letter)
+        results.extend(rows)
+        time.sleep(0.5)
     return results
 
 
